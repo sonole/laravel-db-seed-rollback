@@ -39,7 +39,7 @@ class SeedCommand extends \Illuminate\Database\Console\Seeds\SeedCommand
             $this->resolver->setDefaultConnection($previousConnection);
         }
 
-        if(!is_null($this->fileToDelete)) {
+        if(isset($this->fileToDelete)) {
             \File::delete($this->fileToDelete);
         }
 
@@ -74,20 +74,23 @@ class SeedCommand extends \Illuminate\Database\Console\Seeds\SeedCommand
         $reflector = new ReflectionClass($class);
         $existingClassContents = file_get_contents($reflector->getFileName());
 
-        $pattern = '/namespace [^;]+;/';
-        $replacement = 'namespace Database\Seeders;';
-        $newClassContents = preg_replace($pattern, $replacement, $existingClassContents);
+        //create file only if contents does not contain the namespace
+        if(!str_contains($existingClassContents, 'Sonole\LaravelDbSeedRollback\Illuminate\Database')) {
+            $pattern = '/namespace [^;]+;/';
+            $replacement = 'namespace Database\Seeders;';
+            $newClassContents = preg_replace($pattern, $replacement, $existingClassContents);
 
-        $pattern = '/class (\w+) extends [^\s]+/';
-        $replacement = 'class ' . $tempClassName . ' extends \Sonole\LaravelDbSeedRollback\Illuminate\Database\Seeder';
-        $newClassContents = preg_replace($pattern, $replacement, $newClassContents);
-        file_put_contents($tempFilePath, $newClassContents);
+            $pattern = '/class (\w+) extends [^\s]+/';
+            $replacement = 'class ' . $tempClassName . ' extends \Sonole\LaravelDbSeedRollback\Illuminate\Database\Seeder';
+            $newClassContents = preg_replace($pattern, $replacement, $newClassContents);
+            file_put_contents($tempFilePath, $newClassContents);
 
-        if(\File::exists($tempFilePath)) {
-            $this->fileToDelete = $tempFilePath;
-            return $this->laravel->make('Database\\Seeders\\' .$tempClassName)
-                ->setContainer($this->laravel)
-                ->setCommand($this);
+            if(\File::exists($tempFilePath)) {
+                $this->fileToDelete = $tempFilePath;
+                return $this->laravel->make('Database\\Seeders\\' .$tempClassName)
+                    ->setContainer($this->laravel)
+                    ->setCommand($this);
+            }
         }
 
         return $this->laravel->make($class)

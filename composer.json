@@ -8,7 +8,7 @@
     }
   ],
   "homepage": "https://github.com/sonole/laravel-db-seed-rollback",
-  "keywords": ["db:seed", "rollback"],
+  "keywords": ["framework", "laravel", "db", "seed", "rollback"],
   "require": {
     "laravel/framework": "^9.0"
   },

@@ -1,6 +1,5 @@
 {
   "name": "sonole/laravel-db-seed-rollback",
-  "description": ":package_description",
   "license": "MIT",
   "authors": [
     {

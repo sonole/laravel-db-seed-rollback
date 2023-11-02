@@ -1,8 +1,7 @@
 # Laravel db:seed with Rollback option
 
 **Introduction**  
-In the context of package development, particularly those involving database seeders, I propose the introduction of the   
-`--rollback` option for the `db:seed` command. This feature complements the existing `migrate:rollback` command and offers a solution for efficient database seeding management.
+In the context of package development, particularly those involving database seeders, I propose the introduction of the  `--rollback` option for the `db:seed` command. This feature complements the existing `migrate:rollback` command and offers a solution for efficient database seeding management.
 
 **The Problem**  
 Currently, many projects rely on packages that utilize seeders to alter the database. However, when complications arise, such as errors, changes in requirements, or the need to remove packages, there is a lack of streamlined mechanisms to revert these seeding changes. While the `migrate:rollback` command helps with migrations, the absence of a corresponding option for seeders presents challenges in complex projects where multiple custom packages are involved.
@@ -11,9 +10,10 @@ Currently, many projects rely on packages that utilize seeders to alter the data
 By introducing the `--rollback` option for the `db:seed` command, package developers and maintainers can now address these issues. 
 
 **Use Case**  
-Just run `db:seed` with the `--rollback` option and `down()` function will be invoked!
+Just run `db:seed` with the `--rollback` option and `down()` function will be invoked!  
+
 ```bash
-php artisan db:seed --class="Vendor\\Package\\Database\\\\Seeders\\\\UsersSeeder" --rollback 
+php artisan db:seed --class="Vendor\\Package\\Database\\Seeders\\UsersSeeder" --rollback 
 #or
 php artisan db:seed --rollback
 ```

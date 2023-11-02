@@ -8,7 +8,7 @@
       "email": "f5890620@gmail.com"
     }
   ],
-  "homepage": "https://github.com/sonole/laravel-db-ssed-rollback",
+  "homepage": "https://github.com/sonole/laravel-db-seed-rollback",
   "keywords": ["db:seed", "rollback"],
   "require": {
     "laravel/framework": "^9.0"

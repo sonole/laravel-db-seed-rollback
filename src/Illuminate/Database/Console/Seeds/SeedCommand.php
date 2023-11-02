@@ -2,52 +2,16 @@
 
 namespace Sonole\LaravelDbSeedRollback\Illuminate\Database\Console\Seeds;
 
-use Illuminate\Console\Command;
-use Illuminate\Console\ConfirmableTrait;
-use Illuminate\Database\ConnectionResolverInterface as Resolver;
 use Illuminate\Database\Eloquent\Model;
 use Symfony\Component\Console\Attribute\AsCommand;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
+use ReflectionClass;
 
 #[AsCommand(name: 'db:seed')]
-class SeedCommand extends Command
+class SeedCommand extends \Illuminate\Database\Console\Seeds\SeedCommand
 {
-    use ConfirmableTrait;
-
-    /**
-     * The console command name.
-     *
-     * @var string
-     */
-    protected $name = 'db:seed';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Seed the database with records';
-
-    /**
-     * The connection resolver instance.
-     *
-     * @var \Illuminate\Database\ConnectionResolverInterface
-     */
-    protected $resolver;
-
-    /**
-     * Create a new database seed command instance.
-     *
-     * @param  \Illuminate\Database\ConnectionResolverInterface  $resolver
-     * @return void
-     */
-    public function __construct(Resolver $resolver)
-    {
-        parent::__construct();
-
-        $this->resolver = $resolver;
-    }
+    /** The file to delete after command is executed */
+    private ?string $fileToDelete;
 
     /**
      * Execute the console command.
@@ -75,13 +39,17 @@ class SeedCommand extends Command
             $this->resolver->setDefaultConnection($previousConnection);
         }
 
+        if(!is_null($this->fileToDelete)) {
+            \File::delete($this->fileToDelete);
+        }
+
         return 0;
     }
 
     /**
      * Get a seeder instance from the container.
      *
-     * @return \Illuminate\Database\Seeder
+     * @return \Sonole\LaravelDbSeedRollback\Illuminate\Database\Seeder
      */
     protected function getSeeder()
     {
@@ -96,33 +64,35 @@ class SeedCommand extends Command
             $class = 'DatabaseSeeder';
         }
 
+        //Create a temporary file which will extend the desired class that we need to invoke.
+        $tempClassName = $class . 'ExtendsRollback';
+        if(str_contains($tempClassName, '\\')) {
+            $arr = explode('\\', $tempClassName);
+            $tempClassName = end($arr);
+        }
+        $tempFilePath = database_path('seeders' . DIRECTORY_SEPARATOR . $tempClassName . '.php');
+        $reflector = new ReflectionClass($class);
+        $existingClassContents = file_get_contents($reflector->getFileName());
+
+        $pattern = '/namespace [^;]+;/';
+        $replacement = 'namespace Database\Seeders;';
+        $newClassContents = preg_replace($pattern, $replacement, $existingClassContents);
+
+        $pattern = '/class (\w+) extends [^\s]+/';
+        $replacement = 'class ' . $tempClassName . ' extends \Sonole\LaravelDbSeedRollback\Illuminate\Database\Seeder';
+        $newClassContents = preg_replace($pattern, $replacement, $newClassContents);
+        file_put_contents($tempFilePath, $newClassContents);
+
+        if(\File::exists($tempFilePath)) {
+            $this->fileToDelete = $tempFilePath;
+            return $this->laravel->make('Database\\Seeders\\' .$tempClassName)
+                ->setContainer($this->laravel)
+                ->setCommand($this);
+        }
+
         return $this->laravel->make($class)
             ->setContainer($this->laravel)
             ->setCommand($this);
-    }
-
-    /**
-     * Get the name of the database connection to use.
-     *
-     * @return string
-     */
-    protected function getDatabase()
-    {
-        $database = $this->input->getOption('database');
-
-        return $database ?: $this->laravel['config']['database.default'];
-    }
-
-    /**
-     * Get the console command arguments.
-     *
-     * @return array
-     */
-    protected function getArguments()
-    {
-        return [
-            ['class', InputArgument::OPTIONAL, 'The class name of the root seeder', null],
-        ];
     }
 
     /**

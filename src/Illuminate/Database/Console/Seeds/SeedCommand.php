@@ -64,6 +64,12 @@ class SeedCommand extends \Illuminate\Database\Console\Seeds\SeedCommand
             $class = 'DatabaseSeeder';
         }
 
+        if (! $this->input->getOption('rollback') === true) {
+            return $this->laravel->make($class)
+                ->setContainer($this->laravel)
+                ->setCommand($this);
+        }
+
         //Create a temporary file which will extend the desired class that we need to invoke.
         $tempClassName = $class . 'ExtendsRollback';
         if(str_contains($tempClassName, '\\')) {
